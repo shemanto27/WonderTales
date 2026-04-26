@@ -2,47 +2,39 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from ..models import CustomUserModel
-from ..serializers import CustomUserModelSerializer
+from ..models import CustomUserModel, ChildrenProfileModel
+from ..serializers import CustomUserModelSerializer, ChildrenProfileSerializer
 from rest_framework.permissions import IsAuthenticated
-
-# Create your views here.
 
 class CustomUserViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = CustomUserModel.objects.all()
     serializer_class = CustomUserModelSerializer
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+        if request.method == 'GET':
+            serializer = self.get_serializer(request.user)
+            return Response(serializer.data)
+        elif request.method == 'PATCH':
+            serializer = self.get_serializer(request.user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'])
-    def follow(self, request, pk=None):
-        user_to_follow = self.get_object()
-        if user_to_follow == request.user:
-            return Response({'error': 'You cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        request.user.following.add(user_to_follow)
-        return Response({'status': 'following'}, status=status.HTTP_200_OK)
+class ChildrenProfileViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChildrenProfileSerializer
 
-    @action(detail=True, methods=['post'])
-    def unfollow(self, request, pk=None):
-        user_to_unfollow = self.get_object()
-        request.user.following.remove(user_to_unfollow)
-        return Response({'status': 'unfollowed'}, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        # Handle schema generation
+        if getattr(self, 'swagger_fake_view', False) or self.request.user.is_anonymous:
+            return ChildrenProfileModel.objects.none()
+            
+        # Only return profiles belonging to the authenticated user
+        return ChildrenProfileModel.objects.filter(user=self.request.user)
 
-    @action(detail=True, methods=['get'])
-    def followers(self, request, pk=None):
-        user = self.get_object()
-        followers = user.followers.all()
-        serializer = self.get_serializer(followers, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['get'])
-    def following(self, request, pk=None):
-        user = self.get_object()
-        following = user.following.all()
-        serializer = self.get_serializer(following, many=True)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        # Set the user to the current authenticated user
+        serializer.save(user=self.request.user)

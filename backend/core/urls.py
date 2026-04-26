@@ -56,8 +56,8 @@ urlpatterns = [
     
 
     path('v1/app_settings/', include('apps.app_settings.urls')),
-    
-    path('v1/reports/', include('apps.admins.report_urls')),
+
+    path('v1/stories/', include('apps.story.urls')),
     
     
     # API Documentation

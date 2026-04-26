@@ -118,6 +118,8 @@ EXTERNAL_APPS = [
     'apps.admins',
 
     'apps.app_settings',
+
+    'apps.story',
     
 ]
 
