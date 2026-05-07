@@ -1,3 +1,13 @@
+variable "aws_profile" {
+  description = "AWS CLI profile name configured locally"
+  default     = "wondertales"
+}
+
+variable "region" {
+  description = "AWS region"
+  default     = "eu-north-1"
+}
+
 variable "instance_type" {
   description = "EC2 instance type"
   default     = "t3.micro"
@@ -10,7 +20,7 @@ variable "ami" {
 
 variable "bucket_name" {
   description = "S3 bucket name"
-  default     = "chef-starz-bucket"
+  default     = "wonder-tales-bucket"
 }
 
 variable "ec2_name" {
@@ -29,12 +39,5 @@ variable "db_password" {
   default     = "wondertales_db_password"
 }
 
-variable "aws_profile" {
-  description = "AWS CLI profile name configured locally"
-  default     = "wondertales"
-}
 
-variable "region" {
-  description = "AWS region"
-  default     = "eu-north-1"
-}
+

@@ -14,3 +14,17 @@ services:
     volumes:
       - ./backend:/app
     restart: always
+
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    image: wondertales-ai
+    container_name: wondertales-ai
+    ports:
+      - "8001:8000"
+    env_file:
+      - ai/.env
+    volumes:
+      - ./ai:/app
+    restart: always

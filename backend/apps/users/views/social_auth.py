@@ -18,5 +18,5 @@ class AppleLogin(SocialLoginView):
     Flutter developer should send the 'access_token' or 'id_token' received from Apple.
     """
     adapter_class = AppleOAuth2Adapter
-    callback_url = "https://chef-starz.com/auth/apple/callback/"
+    callback_url = "https://wonder-tales.com/auth/apple/callback/"
     client_class = OAuth2Client

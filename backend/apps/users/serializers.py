@@ -11,6 +11,7 @@ class ChildrenProfileSerializer(serializers.ModelSerializer):
             'id', 'user', 'child_name', 'child_image', 'child_age', 
             'child_gender', 'favourite_themes', 'created_at', 'updated_at'
         ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
 class CustomUserModelSerializer(serializers.ModelSerializer):
     children_profiles = ChildrenProfileSerializer(many=True, read_only=True)

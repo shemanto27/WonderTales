@@ -7,3 +7,12 @@ services:
     env_file:
       - backend/.env
     restart: always
+
+  ai:
+    image: shemanto27/wondertales:ai-latest
+    container_name: wondertales-ai
+    ports:
+      - "8050:8000"
+    env_file:
+      - ai/.env
+    restart: always

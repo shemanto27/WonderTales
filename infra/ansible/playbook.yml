@@ -3,11 +3,12 @@
 
   vars:
     project_path: /home/ubuntu/wondertales
-    website_domain: api.wondertales.com
-    certbot_email: shemantosharkarofficial@gmail.com 
-    env_file_src: ../../backend/.env
+    server_ip: 13.61.204.194
+    backend_env_src: ../../backend/.env
+    ai_env_src: ../../ai/.env
     docker_compose_src: ../../docker-compose.prod.yml
-    nginx_conf_src: ../../nginx/backend.conf
+    nginx_backend_src: ../../nginx/backend.conf
+    nginx_ai_src: ../../nginx/ai.conf
 
   tasks:
     - name: Update apt packages
@@ -42,8 +43,6 @@
           - docker-buildx-plugin
           - docker-compose-plugin
           - nginx
-          - certbot
-          - python3-certbot-nginx
         state: present
         update_cache: yes
 
@@ -53,26 +52,30 @@
         groups: docker
         append: yes
 
-    - name: Create project folder
+    - name: Create project folders
       file:
-        path: "{{ project_path }}"
+        path: "{{ item }}"
         state: directory
         mode: "0755"
         owner: ubuntu
         group: ubuntu
+      loop:
+        - "{{ project_path }}"
+        - "{{ project_path }}/backend"
+        - "{{ project_path }}/ai"
 
-    - name: Create backend folder
-      file:
-        path: "{{ project_path }}/backend"
-        state: directory
-        mode: "0755"
-        owner: ubuntu
-        group: ubuntu
-
-    - name: Copy .env file
+    - name: Copy backend .env file
       copy:
-        src: "{{ env_file_src }}"
+        src: "{{ backend_env_src }}"
         dest: "{{ project_path }}/backend/.env"
+        mode: "0600"
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Copy AI .env file
+      copy:
+        src: "{{ ai_env_src }}"
+        dest: "{{ project_path }}/ai/.env"
         mode: "0600"
         owner: ubuntu
         group: ubuntu
@@ -87,27 +90,25 @@
       notify:
         - restart docker-compose
 
-    - name: Set permissions on project folder recursively
-      file:
-        path: "{{ project_path }}"
-        state: directory
-        recurse: yes
-        owner: ubuntu
-        group: ubuntu
-
-    - name: Copy Nginx config to EC2
+    - name: Copy Nginx configs
       copy:
-        src: "{{ nginx_conf_src }}"
-        dest: /etc/nginx/sites-available/backend
+        src: "{{ item.src }}"
+        dest: "/etc/nginx/sites-available/{{ item.name }}"
         mode: "0644"
+      loop:
+        - { src: "{{ nginx_backend_src }}", name: "backend" }
+        - { src: "{{ nginx_ai_src }}", name: "ai" }
       notify:
         - reload nginx
 
-    - name: Enable Nginx site
+    - name: Enable Nginx sites
       file:
-        src: /etc/nginx/sites-available/backend
-        dest: /etc/nginx/sites-enabled/backend
+        src: "/etc/nginx/sites-available/{{ item }}"
+        dest: "/etc/nginx/sites-enabled/{{ item }}"
         state: link
+      loop:
+        - "backend"
+        - "ai"
       notify:
         - reload nginx
 
@@ -118,21 +119,9 @@
       notify:
         - reload nginx
 
-    - name: Obtain SSL certificate via Certbot
-      command: >
-        certbot --nginx
-        -d {{ website_domain }}
-        --non-interactive
-        --agree-tos
-        -m {{ certbot_email }}
-      args:
-        creates: "/etc/letsencrypt/live/{{ website_domain }}/fullchain.pem"
-      ignore_errors: yes
-
     - name: Ensure Docker Compose is running
       command: docker compose -f docker-compose.prod.yml up -d
       become: yes
-      become_user: ubuntu
       args:
         chdir: "{{ project_path }}"
 
@@ -145,6 +134,5 @@
     - name: restart docker-compose
       command: docker compose -f docker-compose.prod.yml up -d
       become: yes
-      become_user: ubuntu
       args:
         chdir: "{{ project_path }}"
