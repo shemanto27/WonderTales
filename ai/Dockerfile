@@ -1,20 +1,25 @@
-# ── Stage 1: build deps ──────────────────────────────────────────
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bullseye
 
+# Environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install uv
+RUN pip install uv
+
+# Set the working directory
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
+# Copy only dependency files
+COPY pyproject.toml uv.lock ./
 
-# ── Stage 2: runtime ─────────────────────────────────────────────
-FROM python:3.12-slim
+# Install dependencies
+RUN uv sync --frozen
 
-WORKDIR /app
+# adding venv's bin to PATH
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy installed packages
-COPY --from=builder /install /usr/local
-
-# Copy application code
+# Copy the rest of the application code
 COPY . .
 
 # Create audio storage directory
@@ -25,6 +30,8 @@ RUN adduser --disabled-password --gecos "" appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
+# Expose the port the app runs on
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Start server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
