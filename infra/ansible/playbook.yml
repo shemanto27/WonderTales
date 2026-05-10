@@ -4,6 +4,9 @@
   vars:
     project_path: /home/ubuntu/wondertales
     server_ip: 13.61.204.194
+    backend_domain: api.wondertaleshub.com
+    ai_domain: ai.wondertaleshub.com
+    certbot_email: shemanto27@gmail.com
     backend_env_src: ../../backend/.env
     ai_env_src: ../../ai/.env
     docker_compose_src: ../../docker-compose.prod.yml
@@ -43,6 +46,8 @@
           - docker-buildx-plugin
           - docker-compose-plugin
           - nginx
+          - certbot
+          - python3-certbot-nginx
         state: present
         update_cache: yes
 
@@ -119,8 +124,30 @@
       notify:
         - reload nginx
 
-    - name: Ensure Docker Compose is running
-      command: docker compose -f docker-compose.prod.yml up -d
+    - name: Obtain SSL certificate for backend domain
+      command: >
+        certbot --nginx
+        -d {{ backend_domain }}
+        --non-interactive
+        --agree-tos
+        -m {{ certbot_email }}
+      args:
+        creates: /etc/letsencrypt/live/{{ backend_domain }}/fullchain.pem
+
+    - name: Obtain SSL certificate for AI domain
+      command: >
+        certbot --nginx
+        -d {{ ai_domain }}
+        --non-interactive
+        --agree-tos
+        -m {{ certbot_email }}
+      args:
+        creates: /etc/letsencrypt/live/{{ ai_domain }}/fullchain.pem
+
+    - name: Pull and start Docker Compose services
+      shell: |
+        docker compose -f docker-compose.prod.yml pull
+        docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
       become: yes
       args:
         chdir: "{{ project_path }}"
@@ -132,7 +159,8 @@
         state: reloaded
 
     - name: restart docker-compose
-      command: docker compose -f docker-compose.prod.yml up -d
-      become: yes
+      shell: |
+        docker compose -f docker-compose.prod.yml pull
+        docker compose -f docker-compose.prod.yml up -d --force-recreate
       args:
         chdir: "{{ project_path }}"

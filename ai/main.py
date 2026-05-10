@@ -29,6 +29,23 @@ from routers import stories, voices
 settings = get_settings()
 setup_logging("DEBUG" if settings.app_env != "production" else "INFO")
 
+# ── Sentry ─────────────────────────────────────────────────────────
+if settings.sentry_dsn and settings.app_env == "production":
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        send_default_pii=True,
+        traces_sample_rate=0.2,
+        integrations=[
+            StarletteIntegration(),
+            FastApiIntegration(),
+        ],
+        environment="production",
+    )
+
 
 def _join_url(host: str, port: int, path: str = "") -> str:
     normalized_path = f"/{path.lstrip('/')}" if path else ""

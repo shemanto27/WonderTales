@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     max_voice_recording_seconds: int = 300
     allowed_origins: str = "*"
 
+    # ── Sentry ────────────────────────────────────────────────
+    sentry_dsn: str = ""
+
     @property
     def preset_voices(self) -> dict[str, str]:
         """Map of voice slug → ElevenLabs voice ID (3-tier structure)."""
