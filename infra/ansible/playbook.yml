@@ -124,6 +124,9 @@
       notify:
         - reload nginx
 
+    - name: Flush handlers to reload Nginx
+      meta: flush_handlers
+
     - name: Obtain SSL certificate for backend domain
       command: >
         certbot --nginx

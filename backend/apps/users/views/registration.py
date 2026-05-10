@@ -32,7 +32,7 @@ class SignupView(APIView):
                 message=f"Your verification code is: {otp}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
-                fail_silently=False,
+                fail_silently=True,
             )
             
             return Response({
@@ -103,7 +103,7 @@ class ResendOTPView(APIView):
                 message=f"Your new verification code is: {otp}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
-                fail_silently=False,
+                fail_silently=True,
             )
             return Response({"message": "New OTP sent to email."}, status=status.HTTP_200_OK)
 
