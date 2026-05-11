@@ -275,7 +275,6 @@ else:
     EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False)
     EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
     EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 
 
 # ------------------------------------------------------------------------------
