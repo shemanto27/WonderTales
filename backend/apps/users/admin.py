@@ -75,7 +75,7 @@ def user_stats_callback(request, context):
     context.update({
         "total_users": CustomUserModel.objects.count(),
         "active_users": CustomUserModel.objects.filter(is_active=True).count(),
-        "total_children": Children_Profile.objects.count(),
+        "total_children": ChildrenProfileModel.objects.count(),
     })
 
     try:

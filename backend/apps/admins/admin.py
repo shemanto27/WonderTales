@@ -1,12 +1,13 @@
 from django.contrib import admin
-from .models import *
-from rest_framework.authtoken.models import TokenProxy
+from unfold.admin import ModelAdmin
+from .models import AppDetailsModel, ReportModel
 
-# Register your models here.
-admin.site.register(AppDetailsModel)
-admin.site.register(ReportModel)
-
-try:
-    admin.site.unregister(TokenProxy)
-except admin.sites.NotRegistered:
-    pass
+@admin.register(AppDetailsModel)
+class AppDetailsAdmin(ModelAdmin):
+    list_display = ["__str__"]
+    
+@admin.register(ReportModel)
+class ReportAdmin(ModelAdmin):
+    list_display = ["reporter", "target_type", "target_id", "created_at"]
+    list_filter = ["target_type", "created_at"]
+    search_fields = ["reporter__email", "target_id", "reason"]
