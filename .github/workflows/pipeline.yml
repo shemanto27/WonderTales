@@ -10,6 +10,7 @@ env:
   DOCKER_REPO: shemanto27/wondertales
   BACKEND_TAG_LATEST: backend-latest
   AI_TAG_LATEST: ai-latest
+  LANDINGPAGE_TAG_LATEST: landingpage-latest
 
 jobs:
   dockerhub:
@@ -36,6 +37,11 @@ jobs:
         run: |
           docker build --no-cache -t $DOCKER_REPO:$AI_TAG_LATEST ai/
           docker push $DOCKER_REPO:$AI_TAG_LATEST
+
+      - name: Build and Push landingpage image
+        run: |
+          docker build --no-cache -t $DOCKER_REPO:$LANDINGPAGE_TAG_LATEST landingpage/
+          docker push $DOCKER_REPO:$LANDINGPAGE_TAG_LATEST
 
   deploy:
     name: Deploy to EC2

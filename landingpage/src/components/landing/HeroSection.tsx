@@ -10,7 +10,14 @@ import avatarUser4 from '../../assets/avatar4.svg'
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex flex-col justify-end pb-16" style={{ backgroundImage: `url('${heroImage}')`, backgroundSize: 'cover', backgroundPosition: 'center top' }}>
+    <section className="relative min-h-[90vh] flex flex-col justify-end pb-16">
+      {/* Background Image using absolute img tag for bulletproof rendering */}
+      <img 
+        src={heroImage} 
+        alt="" 
+        className="absolute inset-0 w-full h-full object-cover object-top z-0 pointer-events-none"
+      />
+      
       <div className="absolute inset-0 bg-navy-950/40 z-0" />
       <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-navy-950 to-transparent z-0" />
 

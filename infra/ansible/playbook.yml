@@ -4,12 +4,15 @@
   vars:
     project_path: /home/ubuntu/wondertales
     server_ip: 13.61.204.194
+    landingpage_domain: wondertaleshub.com
+    landingpage_www_domain: www.wondertaleshub.com
     backend_domain: api.wondertaleshub.com
     ai_domain: ai.wondertaleshub.com
     certbot_email: shemanto27@gmail.com
     backend_env_src: ../../backend/.env
     ai_env_src: ../../ai/.env
     docker_compose_src: ../../docker-compose.prod.yml
+    nginx_landingpage_src: ../../nginx/landingpage.conf
     nginx_backend_src: ../../nginx/backend.conf
     nginx_ai_src: ../../nginx/ai.conf
 
@@ -101,6 +104,7 @@
         dest: "/etc/nginx/sites-available/{{ item.name }}"
         mode: "0644"
       loop:
+        - { src: "{{ nginx_landingpage_src }}", name: "landingpage" }
         - { src: "{{ nginx_backend_src }}", name: "backend" }
         - { src: "{{ nginx_ai_src }}", name: "ai" }
       notify:
@@ -112,6 +116,7 @@
         dest: "/etc/nginx/sites-enabled/{{ item }}"
         state: link
       loop:
+        - "landingpage"
         - "backend"
         - "ai"
       notify:
@@ -126,6 +131,17 @@
 
     - name: Flush handlers to reload Nginx
       meta: flush_handlers
+
+    - name: Obtain SSL certificate for landing page domain
+      command: >
+        certbot --nginx
+        -d {{ landingpage_domain }}
+        -d {{ landingpage_www_domain }}
+        --non-interactive
+        --agree-tos
+        -m {{ certbot_email }}
+      args:
+        creates: /etc/letsencrypt/live/{{ landingpage_domain }}/fullchain.pem
 
     - name: Obtain SSL certificate for backend domain
       command: >

@@ -58,6 +58,7 @@ urlpatterns = [
     path('v1/app_settings/', include('apps.app_settings.urls')),
 
     path('v1/stories/', include('apps.story.urls')),
+    path('v1/', include('apps.blogs.urls')),
     
     
     # API Documentation

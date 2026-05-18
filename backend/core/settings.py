@@ -120,6 +120,8 @@ EXTERNAL_APPS = [
     'apps.app_settings',
 
     'apps.story',
+
+    'apps.blogs',
     
 ]
 
@@ -350,17 +352,17 @@ SWAGGER_SETTINGS = {
 # UNFOLD ADMIN
 # ------------------------------------------------------------------------------
 UNFOLD = {
-    "SITE_HEADER": "Chef Starz Admin",  # Main title in the sidebar
-    "SITE_TITLE": "Chef Starz",        # Suffix in the browser tab <title>
-    "INDEX_TITLE": "Welcome to Chef Starz Dashboard", # Heading on the home page
+    "SITE_HEADER": "WonderTales Admin",  # Main title in the sidebar
+    "SITE_TITLE": "WonderTales",        # Suffix in the browser tab <title>
+    "INDEX_TITLE": "Welcome to WonderTales Dashboard", # Heading on the home page
     "INDEX_TEMPLATE": "admin/index.html",
     "DASHBOARD_CALLBACK": "apps.users.admin.user_stats_callback",
     "STYLES": [
-        f"https://{AWS_S3_CUSTOM_DOMAIN}/static/css/custom_admin.css",
+        "/static/css/custom_admin.css" if DEBUG else f"https://{AWS_S3_CUSTOM_DOMAIN}/static/css/custom_admin.css",
     ],
 
     "SIDEBAR": {
-        "show_search": False,  # Allows searching through models
+        "show_search": True,  # Allows searching through models
         "show_all_applications": False,  # MUST BE FALSE to hide unlisted apps
         "navigation": [
             {
@@ -375,12 +377,34 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Admins",
+                "title": "Magical Content",
+                "separator": True,
                 "items": [
                     {
-                        "title": "App details models",
+                        "title": "Blog Posts",
+                        "icon": "rss_feed",
+                        "link": "/admin/blogs/blogmodel/",
+                    },
+                ],
+            },
+            {
+                "title": "System Administration",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "App Details",
                         "icon": "settings",
                         "link": "/admin/admins/appdetailsmodel/", 
+                    },
+                    {
+                        "title": "App Settings",
+                        "icon": "admin_panel_settings",
+                        "link": "/admin/app_settings/appsettingsmodel/", 
+                    },
+                    {
+                        "title": "System Reports",
+                        "icon": "report",
+                        "link": "/admin/admins/reportmodel/", 
                     },
                 ],
             },
@@ -410,7 +434,6 @@ UNFOLD = {
                     },
                 ],
             },
-            # You can add more groups here...
         ],
     },
     "COMMAND": {

@@ -21,10 +21,9 @@
 /* Wrapper div with backdrop effect */
 div[x-data="searchCommand()"],
 div[x-show="openCommandResults"],
-.backdrop-blur,
-.backdrop-blur-xs,
-.bg-base-900\/80.fixed.inset-0,
-.backdrop-blur-bg-900\/80 {
+div[x-data="searchCommand()"] .backdrop-blur,
+div[x-data="searchCommand()"] .backdrop-blur-xs,
+.bg-base-900\/80.fixed.inset-0 {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;

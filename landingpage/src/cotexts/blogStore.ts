@@ -3,6 +3,11 @@ import type { BlogPost } from '../types/blog'
 
 interface BlogState {
   blogs: BlogPost[]
+  activeBlog: BlogPost | null
+  loading: boolean
+  error: string | null
+  fetchBlogs: () => Promise<void>
+  fetchBlogBySlug: (slug: string) => Promise<BlogPost | null>
   getBlogBySlug: (slug: string) => BlogPost | undefined
 }
 
@@ -43,7 +48,75 @@ const mockBlogs: BlogPost[] = [
   },
 ]
 
-export const useBlogStore = create<BlogState>(() => ({
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+export const useBlogStore = create<BlogState>((set, get) => ({
   blogs: mockBlogs,
-  getBlogBySlug: (slug: string) => mockBlogs.find((item) => item.slug === slug),
+  activeBlog: null,
+  loading: false,
+  error: null,
+
+  fetchBlogs: async () => {
+    set({ loading: true, error: null })
+    try {
+      const res = await fetch(`${API_BASE}/v1/blogs/`)
+      if (!res.ok) throw new Error('Failed to fetch blogs')
+      const data = await res.json()
+      if (data && data.length > 0) {
+        const mapped = data.map((b: any) => ({
+          ...b,
+          excerpt: b.content ? b.content.substring(0, 120) + '...' : b.excerpt || '',
+          category: b.tags_list && b.tags_list.length > 0 ? b.tags_list[0] : 'Parenting',
+          date: b.updated_at ? new Date(b.updated_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : 'Recently',
+          image: b.image ? (b.image.startsWith('http') ? b.image : `${API_BASE}${b.image}`) : coverBedtime,
+        }))
+        set({ blogs: mapped, loading: false })
+      } else {
+        set({ loading: false })
+      }
+    } catch (err: any) {
+      console.warn('API fetch failed, falling back to mock blogs:', err.message)
+      set({ loading: false })
+    }
+  },
+
+  fetchBlogBySlug: async (slug: string) => {
+    // First check mock blogs
+    const mockFound = mockBlogs.find((item) => item.slug === slug)
+    if (mockFound) {
+      set({ activeBlog: mockFound })
+      return mockFound
+    }
+
+    set({ loading: true, error: null })
+    try {
+      const res = await fetch(`${API_BASE}/v1/blogs/${slug}/`)
+      if (!res.ok) throw new Error('Blog post not found')
+      const data = await res.json()
+      const mapped = {
+        ...data,
+        excerpt: data.content ? data.content.substring(0, 120) + '...' : data.excerpt || '',
+        category: data.tags_list && data.tags_list.length > 0 ? data.tags_list[0] : 'Parenting',
+        date: data.updated_at ? new Date(data.updated_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : 'Recently',
+        image: data.image ? (data.image.startsWith('http') ? data.image : `${API_BASE}${data.image}`) : coverBedtime,
+      }
+      set({ activeBlog: mapped, loading: false })
+      return mapped
+    } catch (err: any) {
+      set({ loading: false, error: err.message })
+      return null
+    }
+  },
+
+  getBlogBySlug: (slug: string) => {
+    return get().blogs.find((item) => item.slug === slug)
+  },
 }))

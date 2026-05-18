@@ -24,6 +24,15 @@ services:
     networks:
       - wondertales-net
 
+  landingpage:
+    image: shemanto27/wondertales:landingpage-latest
+    container_name: wondertales-landingpage
+    ports:
+      - "8080:80"
+    restart: always
+    networks:
+      - wondertales-net
+
 networks:
   wondertales-net:
     driver: bridge
