@@ -98,6 +98,45 @@
       notify:
         - restart docker-compose
 
+    - name: Create letsencrypt directories
+      file:
+        path: "/etc/letsencrypt/live/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ landingpage_domain }}"
+        - "{{ backend_domain }}"
+        - "{{ ai_domain }}"
+
+    - name: Check if options-ssl-nginx.conf exists
+      stat:
+        path: /etc/letsencrypt/options-ssl-nginx.conf
+      register: options_ssl
+
+    - name: Download options-ssl-nginx.conf if missing
+      get_url:
+        url: https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf
+        dest: /etc/letsencrypt/options-ssl-nginx.conf
+      when: not options_ssl.stat.exists
+
+    - name: Generate dummy dhparam if missing
+      command: openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 1024
+      args:
+        creates: /etc/letsencrypt/ssl-dhparams.pem
+
+    - name: Generate dummy self-signed certs
+      command: >
+        openssl req -x509 -nodes -days 1 -newkey rsa:2048
+        -keyout /etc/letsencrypt/live/{{ item }}/privkey.pem
+        -out /etc/letsencrypt/live/{{ item }}/fullchain.pem
+        -subj "/CN={{ item }}"
+      args:
+        creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+      loop:
+        - "{{ landingpage_domain }}"
+        - "{{ backend_domain }}"
+        - "{{ ai_domain }}"
+
     - name: Copy Nginx configs
       copy:
         src: "{{ item.src }}"
@@ -132,6 +171,15 @@
     - name: Flush handlers to reload Nginx
       meta: flush_handlers
 
+    - name: Remove dummy certificates to allow Certbot
+      file:
+        path: "/etc/letsencrypt/live/{{ item }}"
+        state: absent
+      loop:
+        - "{{ landingpage_domain }}"
+        - "{{ backend_domain }}"
+        - "{{ ai_domain }}"
+
     - name: Obtain SSL certificate for landing page domain
       command: >
         certbot --nginx
@@ -140,8 +188,7 @@
         --non-interactive
         --agree-tos
         -m {{ certbot_email }}
-      args:
-        creates: /etc/letsencrypt/live/{{ landingpage_domain }}/fullchain.pem
+      ignore_errors: yes
 
     - name: Obtain SSL certificate for backend domain
       command: >
@@ -150,8 +197,7 @@
         --non-interactive
         --agree-tos
         -m {{ certbot_email }}
-      args:
-        creates: /etc/letsencrypt/live/{{ backend_domain }}/fullchain.pem
+      ignore_errors: yes
 
     - name: Obtain SSL certificate for AI domain
       command: >
@@ -160,8 +206,35 @@
         --non-interactive
         --agree-tos
         -m {{ certbot_email }}
+      ignore_errors: yes
+
+    - name: Restore letsencrypt directories if Certbot failed
+      file:
+        path: "/etc/letsencrypt/live/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ landingpage_domain }}"
+        - "{{ backend_domain }}"
+        - "{{ ai_domain }}"
+
+    - name: Restore dummy self-signed certs if Certbot failed
+      command: >
+        openssl req -x509 -nodes -days 1 -newkey rsa:2048
+        -keyout /etc/letsencrypt/live/{{ item }}/privkey.pem
+        -out /etc/letsencrypt/live/{{ item }}/fullchain.pem
+        -subj "/CN={{ item }}"
       args:
-        creates: /etc/letsencrypt/live/{{ ai_domain }}/fullchain.pem
+        creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+      loop:
+        - "{{ landingpage_domain }}"
+        - "{{ backend_domain }}"
+        - "{{ ai_domain }}"
+
+    - name: Final Nginx reload to apply certificates
+      service:
+        name: nginx
+        state: reloaded
 
     - name: Pull and start Docker Compose services
       shell: |
