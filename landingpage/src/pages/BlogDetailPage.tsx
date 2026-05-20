@@ -7,6 +7,7 @@ export default function BlogDetailPage() {
   const { activeBlog, fetchBlogBySlug, loading } = useBlogStore()
 
   useEffect(() => {
+    window.scrollTo(0, 0)
     if (slug) {
       fetchBlogBySlug(slug)
     }
@@ -64,60 +65,7 @@ export default function BlogDetailPage() {
     )
   }
 
-  // Split content into paragraphs or headings
-  const renderContent = (content: string) => {
-    const blocks = content.split('\n\n')
-    return blocks.map((block, i) => {
-      // Check if block starts with a number like "1. Set the Stage"
-      const headingMatch = block.match(/^(\d+\.\s+.+)$/)
-      if (headingMatch) {
-        return (
-          <h2 key={i} className="mt-10 font-serif text-2xl text-gold sm:text-3xl">
-            {headingMatch[1]}
-          </h2>
-        )
-      }
-      // Check for "The Ultimate Benefit" type headings
-      if (block.startsWith('The Ultimate')) {
-        return (
-          <h2 key={i} className="mt-10 font-serif text-2xl text-gold sm:text-3xl">
-            {block}
-          </h2>
-        )
-      }
-      // Check for bullet points
-      if (block.includes('\n•') || block.includes('\n- ')) {
-        const lines = block.split('\n')
-        return (
-          <ul key={i} className="mt-4 space-y-3">
-            {lines.map((line, j) => {
-              const bulletText = line.replace(/^[•\-]\s*/, '')
-              const boldMatch = bulletText.match(/^(.+?:)\s*(.+)$/)
-              if (boldMatch) {
-                return (
-                  <li key={j} className="text-sm text-slate-300 leading-7 flex gap-2">
-                    <span className="text-white mt-1">•</span>
-                    <span><strong className="text-white">{boldMatch[1]}</strong> {boldMatch[2]}</span>
-                  </li>
-                )
-              }
-              return (
-                <li key={j} className="text-sm text-slate-300 leading-7 flex gap-2">
-                  <span className="text-white mt-1">•</span>
-                  <span>{bulletText}</span>
-                </li>
-              )
-            })}
-          </ul>
-        )
-      }
-      return (
-        <p key={i} className="mt-4 text-sm text-slate-300 leading-8">
-          {block}
-        </p>
-      )
-    })
-  }
+
 
   return (
     <div className="bg-navy-950 px-6 py-16 lg:px-8">
@@ -144,9 +92,10 @@ export default function BlogDetailPage() {
           />
         )}
 
-        <div className="mt-10">
-          {renderContent(activeBlog.content || '')}
-        </div>
+        <div 
+          className="mt-10 prose prose-invert prose-gold max-w-none text-slate-300"
+          dangerouslySetInnerHTML={{ __html: activeBlog.content || '' }}
+        />
 
         {activeBlog.tags_list && activeBlog.tags_list.length > 0 && (
           <div className="mt-12 pt-8 border-t border-slate-800">

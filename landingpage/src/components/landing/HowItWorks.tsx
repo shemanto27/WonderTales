@@ -1,4 +1,4 @@
-import howItWorksImage from '../../assets/howitworksimg.png'
+import howItWorksImage from '../../assets/howitworksimg.svg'
 import hiwBgImg from '../../assets/hiwbgimg.svg'
 import icon1 from '../../assets/cartoon-boy-with-backpack-tablet 1.png'
 import icon2 from '../../assets/image 20.png'

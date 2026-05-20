@@ -6,6 +6,7 @@ export default function BlogsPage() {
   const { blogs, fetchBlogs, loading } = useBlogStore()
 
   useEffect(() => {
+    window.scrollTo(0, 0)
     fetchBlogs()
   }, [fetchBlogs])
 
