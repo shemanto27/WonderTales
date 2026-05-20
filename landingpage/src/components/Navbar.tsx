@@ -32,12 +32,20 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <a
-          href="/#pricing"
-          className="rounded-md bg-gradient-to-r from-orange-300 via-orange-400 to-orange-500 px-6 py-2.5 text-[13px] font-semibold text-white transition hover:opacity-90"
-        >
-          Get Download link
-        </a>
+        <div className="flex items-center gap-4">
+          <a
+            href={window.location.hostname === 'localhost' ? 'http://localhost:8000/admin/' : 'https://api.wondertaleshub.com/admin/'}
+            className="hidden md:block rounded-md border border-white/20 bg-transparent px-5 py-2.5 text-[13px] font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+          >
+            Admin Login
+          </a>
+          <a
+            href="/#pricing"
+            className="rounded-md bg-gradient-to-r from-orange-300 via-orange-400 to-orange-500 px-6 py-2.5 text-[13px] font-semibold text-white transition hover:opacity-90"
+          >
+            Get Download link
+          </a>
+        </div>
       </div>
     </header>
   )

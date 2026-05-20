@@ -13,22 +13,7 @@ export default function VoiceClone() {
           </div>
  
           <div className="relative z-10 flex flex-col gap-12 lg:flex-row lg:items-center justify-between w-full min-h-[300px]">
-            
-            <div className="relative z-20 flex justify-center lg:justify-start lg:w-1/3 order-3 lg:order-1">
-              {/* Hand with Phone Mockup */}
-              <div className="h-[300px] sm:h-[400px] lg:h-[550px] lg:absolute lg:left-[-40px] lg:-bottom-[100px] shrink-0 hover:scale-105 transition-transform duration-500 pointer-events-none">
-                <img src={handImg} alt="Mobile App in Hand" className="h-full w-auto object-contain max-w-none drop-shadow-2xl" />
-              </div>
-            </div>
-
-            <div className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 z-10 flex justify-center mt-4 lg:mt-0 order-2">
-              {/* Glowing Glass Mic Circle */}
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-white/5 backdrop-blur-md shadow-[0_0_40px_rgba(255,215,0,0.2)] hover:scale-110 transition-transform duration-300">
-                <img src={micImg} alt="Mic" className="h-8 w-8 filter brightness-125" />
-              </div>
-            </div>
-
-            <div className="max-w-md space-y-4 text-left z-20 order-1 lg:order-3">
+            <div className="max-w-md space-y-4 text-left z-20">
               <p className="text-xs font-semibold text-gold tracking-widest uppercase">Your Voice, Their Comfort</p>
               <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white leading-tight">Clone Your Voice<br />in Seconds</h2>
               <p className="text-sm text-white/70 font-light leading-relaxed">
@@ -36,6 +21,19 @@ export default function VoiceClone() {
               </p>
             </div>
             
+            <div className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 z-10 flex justify-center mt-4 lg:mt-0">
+              {/* Glowing Glass Mic Circle */}
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-white/5 backdrop-blur-md shadow-[0_0_40px_rgba(255,215,0,0.2)] hover:scale-110 transition-transform duration-300">
+                <img src={micImg} alt="Mic" className="h-8 w-8 filter brightness-125" />
+              </div>
+            </div>
+            
+            <div className="relative z-20 flex justify-center lg:static">
+              {/* Hand with Phone Mockup */}
+              <div className="h-[300px] sm:h-[400px] lg:h-[550px] lg:absolute lg:-right-16 lg:-bottom-[64px] shrink-0 hover:scale-105 transition-transform duration-500 pointer-events-none">
+                <img src={handImg} alt="Mobile App in Hand" className="h-full w-auto object-right-bottom object-contain max-w-none drop-shadow-2xl pointer-events-auto" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
