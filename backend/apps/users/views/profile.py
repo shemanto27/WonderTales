@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, parsers
 from ..models import CustomUserModel, ChildrenProfileModel
 from ..serializers import CustomUserModelSerializer, ChildrenProfileSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -11,7 +11,7 @@ class CustomUserViewSet(ModelViewSet):
     queryset = CustomUserModel.objects.all()
     serializer_class = CustomUserModelSerializer
 
-    @action(detail=False, methods=['get', 'patch'])
+    @action(detail=False, methods=['get', 'patch'], parser_classes=[parsers.MultiPartParser, parsers.FormParser])
     def me(self, request):
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)

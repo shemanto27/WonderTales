@@ -13,9 +13,9 @@ class StoryModelSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'children_profile', 'title', 'length', 'theme', 'custom_theme',
             'full_story', 'language', 'selected_voices', 'cloned_voice_id',
-            'story_id_ai', 'audio_file', 'created_at', 'updated_at'
+            'story_id_ai', 'audio_file', 'word_timestamps', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'story_id_ai', 'audio_file', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'story_id_ai', 'audio_file', 'word_timestamps', 'created_at', 'updated_at']
 
 # Serializers for Swagger Request Body Documentation
 class StoryGenerateRequestSerializer(serializers.Serializer):

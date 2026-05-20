@@ -187,12 +187,27 @@ class StoryContinueRequest(BaseModel):
         return value
 
 
+# ──────────────────────────────────────────────────────────────────
+#  Word-Level Timestamps for TTS Synchronization
+# ──────────────────────────────────────────────────────────────────
+
+class WordTimestamp(BaseModel):
+    """Word-level timing data for subtitle sync, karaoke, and read-along effects."""
+    word: str = Field(..., description="The spoken word text")
+    start: float = Field(..., ge=0, description="Start time of word in seconds")
+    end: float = Field(..., ge=0, description="End time of word in seconds")
+
+
 class StoryResponse(BaseModel):
     story_id: str
     story_text: str
     audio_url: str = Field(..., description="Relative URL to download narration audio.")
     language: Language
     voice_used: str
+    word_timestamps: Optional[list[WordTimestamp]] = Field(
+        None,
+        description="Optional word-level timestamps for subtitle sync & read-along effects. May be None if extraction failed (backward compatible)."
+    )
 
 
 # ──────────────────────────────────────────────────────────────────

@@ -40,7 +40,7 @@ async def generate_story(body: StoryGenerateRequest, request: Request) -> StoryR
     )
 
     # 2. Convert text to speech via ElevenLabs
-    audio_url = await narration_service.text_to_speech(
+    audio_url, word_timestamps = await narration_service.text_to_speech(
         text=story_text,
         preset_voice_slug=body.narrator_voice.value if not body.cloned_voice_id else None,
         cloned_voice_id=body.cloned_voice_id,
@@ -59,6 +59,7 @@ async def generate_story(body: StoryGenerateRequest, request: Request) -> StoryR
             "cloned_voice_id": body.cloned_voice_id,
             "story_text": story_text,
             "audio_url": absolute_audio_url,
+            "word_timestamps": [ts for ts in word_timestamps] if word_timestamps else None,
             "voice_used": body.cloned_voice_id or body.narrator_voice.value,
         }
     )
@@ -69,6 +70,7 @@ async def generate_story(body: StoryGenerateRequest, request: Request) -> StoryR
         audio_url=absolute_audio_url,
         language=body.language,
         voice_used=body.cloned_voice_id or body.narrator_voice.value,
+        word_timestamps=word_timestamps,
     )
 
 
@@ -103,7 +105,7 @@ async def continue_story(body: StoryContinueRequest, request: Request) -> StoryR
     )
 
     # 2. Narrate continuation
-    audio_url = await narration_service.text_to_speech(
+    audio_url, word_timestamps = await narration_service.text_to_speech(
         text=continuation_text,
         preset_voice_slug=body.narrator_voice.value if not body.cloned_voice_id else None,
         cloned_voice_id=body.cloned_voice_id,
@@ -125,6 +127,7 @@ async def continue_story(body: StoryContinueRequest, request: Request) -> StoryR
             "story_text": combined_story_text,
             "latest_segment_text": continuation_text,
             "audio_url": absolute_audio_url,
+            "word_timestamps": [ts for ts in word_timestamps] if word_timestamps else None,
             "voice_used": body.cloned_voice_id or body.narrator_voice.value,
         }
     )
@@ -135,4 +138,5 @@ async def continue_story(body: StoryContinueRequest, request: Request) -> StoryR
         audio_url=absolute_audio_url,
         language=body.language,
         voice_used=body.cloned_voice_id or body.narrator_voice.value,
+        word_timestamps=word_timestamps,
     )

@@ -47,6 +47,7 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
 
     # custom fields
     date_of_birth = models.DateField(blank=True, null=True)
+    user_image = models.ImageField(upload_to='users/profile_pictures/', blank=True, null=True)
     is_paid = models.BooleanField(default=False, help_text="Designates whether this user has a paid subscription.")
 
     # Verification Trackers

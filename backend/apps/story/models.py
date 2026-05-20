@@ -58,6 +58,7 @@ class StoryModel(models.Model):
     cloned_voice_id = models.CharField(max_length=255, blank=True, null=True) # If using a custom cloned voice
     story_id_ai = models.CharField(max_length=255, blank=True, null=True) # to continue stories
     audio_file = models.FileField(upload_to='stories/audio/', blank=True, null=True)
+    word_timestamps = models.JSONField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -20,7 +20,7 @@ class CustomUserModelSerializer(serializers.ModelSerializer):
         model = CustomUserModel
         fields = [
             'id', 'email', 'username',
-            'date_of_birth', 'is_email_verified', 'is_active',
+            'date_of_birth', 'user_image', 'is_email_verified', 'is_active',
             'children_profiles'
         ]
         read_only_fields = ['id', 'email', 'is_staff', 'is_superuser', 'is_active', 'is_email_verified']

@@ -103,7 +103,8 @@ class StoryModelViewSet(ModelViewSet):
                 selected_voices=narrator_voice,
                 cloned_voice_id=cloned_voice_id,
                 full_story=ai_data.get('story_text'),
-                story_id_ai=ai_data.get('story_id')
+                story_id_ai=ai_data.get('story_id'),
+                word_timestamps=ai_data.get('word_timestamps')
             )
             
             audio_url = ai_data.get('audio_url')
@@ -140,8 +141,9 @@ class StoryModelViewSet(ModelViewSet):
                 cloned_voice_id=cloned_voice_id
             )
             
-            # Update story text
+            # Update story text and timestamps
             story.full_story = ai_data.get('story_text')
+            story.word_timestamps = ai_data.get('word_timestamps')
             story.selected_voices = narrator_voice
             story.cloned_voice_id = cloned_voice_id
             
