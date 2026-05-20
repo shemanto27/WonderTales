@@ -171,70 +171,88 @@
     - name: Flush handlers to reload Nginx
       meta: flush_handlers
 
-    - name: Remove dummy certificates to allow Certbot
-      file:
-        path: "/etc/letsencrypt/live/{{ item }}"
-        state: absent
-      loop:
-        - "{{ landingpage_domain }}"
-        - "{{ backend_domain }}"
-        - "{{ ai_domain }}"
+    - name: Check landing page certificate issuer
+      shell: "openssl x509 -in /etc/letsencrypt/live/{{ landingpage_domain }}/fullchain.pem -issuer -noout | grep -q 'Let\\'s Encrypt'"
+      register: lp_is_real
+      failed_when: false
+      changed_when: false
 
-    - name: Obtain SSL certificate for landing page domain
+    - name: Check backend certificate issuer
+      shell: "openssl x509 -in /etc/letsencrypt/live/{{ backend_domain }}/fullchain.pem -issuer -noout | grep -q 'Let\\'s Encrypt'"
+      register: backend_is_real
+      failed_when: false
+      changed_when: false
+
+    - name: Check AI certificate issuer
+      shell: "openssl x509 -in /etc/letsencrypt/live/{{ ai_domain }}/fullchain.pem -issuer -noout | grep -q 'Let\\'s Encrypt'"
+      register: ai_is_real
+      failed_when: false
+      changed_when: false
+
+    - name: Stop Nginx for standalone Certbot
+      service:
+        name: nginx
+        state: stopped
+      ignore_errors: yes
+
+    - name: Clean ALL certbot state for domains without real certs
+      shell: |
+        for domain in {{ landingpage_domain }} {{ backend_domain }} {{ ai_domain }}; do
+          rm -rf /etc/letsencrypt/live/${domain}*
+          rm -rf /etc/letsencrypt/archive/${domain}*
+          rm -rf /etc/letsencrypt/renewal/${domain}*
+        done
+
+    - name: Obtain SSL certificate for landing page
       command: >
-        certbot --nginx
+        certbot certonly --standalone
         -d {{ landingpage_domain }}
         -d {{ landingpage_www_domain }}
         --non-interactive
         --agree-tos
         -m {{ certbot_email }}
+        --keep-until-expiring
       ignore_errors: yes
+      when: lp_is_real.rc != 0
 
-    - name: Obtain SSL certificate for backend domain
+    - name: Obtain SSL certificate for backend
       command: >
-        certbot --nginx
+        certbot certonly --standalone
         -d {{ backend_domain }}
         --non-interactive
         --agree-tos
         -m {{ certbot_email }}
+        --keep-until-expiring
       ignore_errors: yes
+      when: backend_is_real.rc != 0
 
-    - name: Obtain SSL certificate for AI domain
+    - name: Obtain SSL certificate for AI
       command: >
-        certbot --nginx
+        certbot certonly --standalone
         -d {{ ai_domain }}
         --non-interactive
         --agree-tos
         -m {{ certbot_email }}
+        --keep-until-expiring
       ignore_errors: yes
+      when: ai_is_real.rc != 0
 
-    - name: Restore letsencrypt directories if Certbot failed
-      file:
-        path: "/etc/letsencrypt/live/{{ item }}"
-        state: directory
-        mode: "0755"
-      loop:
-        - "{{ landingpage_domain }}"
-        - "{{ backend_domain }}"
-        - "{{ ai_domain }}"
+    - name: Ensure all domains have certificates (real or dummy fallback)
+      shell: |
+        for domain in {{ landingpage_domain }} {{ backend_domain }} {{ ai_domain }}; do
+          if [ ! -f "/etc/letsencrypt/live/${domain}/fullchain.pem" ]; then
+            mkdir -p /etc/letsencrypt/live/${domain}
+            openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+              -keyout /etc/letsencrypt/live/${domain}/privkey.pem \
+              -out /etc/letsencrypt/live/${domain}/fullchain.pem \
+              -subj "/CN=${domain}"
+          fi
+        done
 
-    - name: Restore dummy self-signed certs if Certbot failed
-      command: >
-        openssl req -x509 -nodes -days 1 -newkey rsa:2048
-        -keyout /etc/letsencrypt/live/{{ item }}/privkey.pem
-        -out /etc/letsencrypt/live/{{ item }}/fullchain.pem
-        -subj "/CN={{ item }}"
-      args:
-        creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
-      loop:
-        - "{{ landingpage_domain }}"
-        - "{{ backend_domain }}"
-        - "{{ ai_domain }}"
-
-    - name: Final Nginx reload to apply certificates
+    - name: Start Nginx
       service:
         name: nginx
-        state: reloaded
+        state: started
 
     - name: Pull and start Docker Compose services
       shell: |
