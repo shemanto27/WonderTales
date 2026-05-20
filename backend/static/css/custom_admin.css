@@ -1,49 +1,13 @@
-/* 
-   FIX: Unfold Admin Search Overlay blocking content in production.
-   This file is loaded in Django Admin to override Unfold styles.
+/*
+   WonderTales Admin Custom CSS
+   NOTE: The command palette is disabled via UNFOLD["COMMAND"] settings in settings.py,
+   so we no longer need any CSS hacks to hide it. This file only contains safe overrides.
 */
 
-/* 1. Ensure Alpine.js elements are hidden until initialized (prevents "FOUC" of search bar) */
+/*
+   1. x-cloak: Hide elements until Alpine.js initialises them.
+   Without this, Alpine-controlled elements flash before JS loads.
+*/
 [x-cloak] {
     display: none !important;
-}
-
-/* 2. Scoped fix for the command palette overlay if display: none is ignored or stripped by purge */
-[x-show="openCommandResults"][style*="display: none"] {
-    display: none !important;
-}
-
-/* 
-   3. Force hide the command palette (global search) modal and backdrop.
-   Targeting both the prompt-provided classes and actual Unfold template classes.
-*/
-
-/* Wrapper div with backdrop effect */
-div[x-data="searchCommand()"],
-div[x-show="openCommandResults"],
-div[x-data="searchCommand()"] .backdrop-blur,
-div[x-data="searchCommand()"] .backdrop-blur-xs {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-/* 4. Ensure no stacking context issues from custom charts.
-   If any chart container uses transform or z-index, we ensure 
-   it doesn't trap fixed elements (though we want this fixed element hidden anyway).
-*/
-.chart-container,
-canvas {
-    z-index: 1 !important;
-}
-
-/* 5. Legacy Selectors for standard Unfold versions */
-#command-palette,
-.command-palette,
-[x-ref='command_palette'] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
 }
