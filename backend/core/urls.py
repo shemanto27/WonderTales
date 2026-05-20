@@ -42,7 +42,20 @@ def redirect_to_docs(request):
 
 
 
+#--------------------------------------
+# Redirect admin root to custom user model list view
+#--------------------------------------
+def redirect_admin_index(request):
+    """Redirect admin index and sidebar logo links directly to the Custom User list page"""
+    if not request.user.is_authenticated:
+        return redirect('/admin/login/?next=/admin/users/customusermodel/')
+    return redirect('/admin/users/customusermodel/')
+#--------------------------------------
+
+
+
 urlpatterns = [
+    path('admin/', redirect_admin_index),
     path('admin/', admin.site.urls),
 
     # Sentry Error Trigger

@@ -35,7 +35,12 @@ resource "aws_s3_bucket_cors_configuration" "media" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "HEAD"]
-    allowed_origins = ["https://api.wondertales.com", "http://localhost:8000"]
+    allowed_origins = [
+      "https://wondertaleshub.com",
+      "https://api.wondertaleshub.com",
+      "https://ai.wondertaleshub.com",
+      "http://localhost:8000"
+    ]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }
