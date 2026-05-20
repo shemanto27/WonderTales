@@ -7,7 +7,7 @@ import ScrollReveal from './ScrollReveal'
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative overflow-hidden px-6 py-28 lg:px-8 min-h-[700px] flex items-center bg-navy-950">
+    <section id="how-it-works" className="relative overflow-hidden px-6 pt-24 pb-0 md:py-28 lg:px-8 min-h-[700px] flex flex-col md:flex-row items-center bg-navy-950">
       
       {/* Actual Starry Constellation Background Vector */}
       <img 
@@ -15,17 +15,6 @@ export default function HowItWorks() {
         alt="" 
         className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-60"
       />
-
-      {/* 2. Father-Daughter Illustration perfectly aligned on the right */}
-      <div className="absolute bottom-0 right-0 w-[45%] md:w-[40%] lg:w-[35%] h-[90%] max-h-[600px] z-0 pointer-events-none">
-        <ScrollReveal direction="left" duration={1200}>
-          <img 
-            src={howItWorksImage} 
-            alt="" 
-            className="w-full h-full object-contain object-right-bottom"
-          />
-        </ScrollReveal>
-      </div>
 
       {/* Content wrapper */}
       <div className="relative z-10 mx-auto w-full max-w-7xl">
@@ -39,7 +28,7 @@ export default function HowItWorks() {
             </div>
           </ScrollReveal>
 
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-3 pb-12 md:pb-0">
             {[
               { icon: icon1, title: 'Create Your Child', desc: 'Create or select profile to personalize their story.' },
               { icon: icon2, title: 'Create Story', desc: 'Choose a theme, length & Voice to generate a story.' },
@@ -57,6 +46,17 @@ export default function HowItWorks() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* 2. Father-Daughter Illustration */}
+      <div className="relative md:absolute bottom-0 right-0 w-full md:w-[40%] lg:w-[35%] h-[350px] md:h-[90%] max-h-[600px] z-0 pointer-events-none mt-auto">
+        <ScrollReveal direction="left" duration={1200}>
+          <img 
+            src={howItWorksImage} 
+            alt="" 
+            className="w-full h-full object-contain md:object-right-bottom object-bottom"
+          />
+        </ScrollReveal>
       </div>
     </section>
   )

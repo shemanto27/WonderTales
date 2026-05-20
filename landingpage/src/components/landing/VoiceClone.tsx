@@ -28,9 +28,9 @@ export default function VoiceClone() {
               </div>
             </div>
             
-            <div className="relative z-20 flex justify-center lg:static">
+            <div className="relative z-20 hidden sm:flex justify-end lg:static mt-4 -mb-6 -mr-6 sm:-mb-10 sm:-mr-10 lg:m-0">
               {/* Hand with Phone Mockup */}
-              <div className="h-[300px] sm:h-[400px] lg:h-[550px] lg:absolute lg:-right-16 lg:-bottom-[64px] shrink-0 hover:scale-105 transition-transform duration-500 pointer-events-none">
+              <div className="h-[350px] sm:h-[450px] lg:h-[550px] lg:absolute lg:-right-16 lg:-bottom-[64px] shrink-0 hover:scale-105 transition-transform duration-500 pointer-events-none">
                 <img src={handImg} alt="Mobile App in Hand" className="h-full w-auto object-right-bottom object-contain max-w-none drop-shadow-2xl pointer-events-auto" />
               </div>
             </div>
