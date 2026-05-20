@@ -361,6 +361,7 @@ SWAGGER_SETTINGS = {
 UNFOLD = {
     "SITE_HEADER": "WonderTales Admin",  # Main title in the sidebar
     "SITE_TITLE": "WonderTales",        # Suffix in the browser tab <title>
+    "SITE_URL": "https://wondertaleshub.com/" if not DEBUG else "http://localhost:5173/",
     "INDEX_TITLE": "Welcome to WonderTales Dashboard", # Heading on the home page
     "INDEX_TEMPLATE": "admin/index.html",
     "DASHBOARD_CALLBACK": "apps.users.admin.user_stats_callback",
