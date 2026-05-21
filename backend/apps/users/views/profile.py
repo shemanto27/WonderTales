@@ -26,6 +26,7 @@ class CustomUserViewSet(ModelViewSet):
 class ChildrenProfileViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ChildrenProfileSerializer
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def get_queryset(self):
         # Handle schema generation

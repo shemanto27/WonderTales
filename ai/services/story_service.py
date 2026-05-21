@@ -39,8 +39,62 @@ def _system_prompt() -> str:
         "Stories are engaging, positive, and always end on a calming, hopeful note. "
         "Never include violence, fear, adult themes, or inappropriate content. "
         "Vary sentence length for rhythm when read aloud. "
+        "Avoid repeating the same opening phrases, stock transitions, or ending patterns across stories. "
+        "Prefer fresh settings, new imagery, different character actions, and varied sentence structures each time. "
         "Return ONLY the story text – no titles, no markdown, no preamble."
     )
+
+
+def _age_story_direction(age: int) -> str:
+    if age <= 4:
+        return (
+            "Use very gentle, simple language with soft magical imagery, short scenes, "
+            "and a calm, cozy bedtime feeling."
+        )
+    if age <= 7:
+        return (
+            "Use playful, colorful language with a light sense of adventure, friendly characters, "
+            "and clear, easy-to-follow scenes."
+        )
+    if age <= 10:
+        return (
+            "Use a more adventurous tone with wonder, small challenges, and vivid settings, "
+            "while keeping the story comforting and age-appropriate."
+        )
+    return (
+        "Use rich but gentle language with slightly more varied pacing, meaningful choices, "
+        "and a mature bedtime calm that still feels warm and safe."
+    )
+
+
+def _theme_story_direction(theme: StoryTheme, custom_theme: str | None) -> str:
+    if theme == StoryTheme.adventure:
+        return (
+            "Use a more energetic pace, clear forward motion, and a sense of discovery or small quest-like progress."
+        )
+    if theme == StoryTheme.fantasy:
+        return (
+            "Use magical imagery, gentle wonder, and a dreamy, enchanted mood."
+        )
+    if theme == StoryTheme.animals:
+        return (
+            "Use warm, cozy scenes, gentle humor, and expressive animal behavior that feels charming and comforting."
+        )
+    if theme == StoryTheme.science:
+        return (
+            "Use curious, inventive, and exploratory pacing with wonder about how things work."
+        )
+    if theme == StoryTheme.friendship:
+        return (
+            "Use heartfelt, supportive, and emotionally warm pacing that highlights caring and cooperation."
+        )
+    if theme == StoryTheme.bedtime:
+        return (
+            "Use a slow, soothing, lullaby-like rhythm with soft transitions and a sleepy ending."
+        )
+    if theme == StoryTheme.custom and custom_theme:
+        return f"Match the custom theme '{custom_theme}' with a mood, pacing, and imagery that clearly fit it."
+    return "Vary the pacing and mood so the theme feels distinct from other stories."
 
 
 def _new_story_prompt(
@@ -59,6 +113,10 @@ def _new_story_prompt(
         f"Language: {language.value}. "
         f"Length: approximately 300–450 words. "
         f"Tone: soothing, imaginative, age-appropriate for a {child.age}-year-old. "
+        f"Age guidance: {_age_story_direction(child.age)} "
+        f"Theme guidance: {_theme_story_direction(theme, custom_theme)} "
+        f"Make this story feel distinct from other stories: use a different opening, a unique small adventure, and varied pacing. "
+        f"Do not reuse familiar phrases or repeated sentence patterns unless they clearly fit the scene. "
         f"End the story so the child feels sleepy and content."
     )
 
@@ -74,6 +132,8 @@ def _continuation_prompt(
         f"Language: {language.value}. "
         f"Length: approximately 250–350 words. "
         f"Maintain the same tone and characters. "
+        f"Age guidance: {_age_story_direction(child.age)} "
+        f"Theme guidance: preserve the established theme, mood, and pacing of the existing story. "
         f"End with a satisfying, sleepy conclusion.\n\n"
         f"PREVIOUS STORY:\n{previous_text}"
     )
@@ -93,6 +153,8 @@ async def _call_openai(system: str, user: str) -> str:
         model=settings.openai_model,
         max_tokens=settings.openai_max_tokens,
         temperature=settings.openai_temperature,
+        presence_penalty=settings.openai_presence_penalty,
+        frequency_penalty=settings.openai_frequency_penalty,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user},

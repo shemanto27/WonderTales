@@ -19,10 +19,13 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
     openai_max_tokens: int = 1500
     openai_temperature: float = 0.85
+    openai_presence_penalty: float = 0.6
+    openai_frequency_penalty: float = 0.4
 
     # ── ElevenLabs ────────────────────────────────────────────
     elevenlabs_api_key: str
     elevenlabs_base_url: str = "https://api.elevenlabs.io/v1"
+    elevenlabs_tts_model: str = "eleven_multilingual_v2"
 
     # ── Narration Voices (3-tier structure for 2–9 years) ────────────────────────
     # Primary Soothing: Main narrator – most calming & bedtime-friendly

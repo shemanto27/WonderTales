@@ -12,6 +12,7 @@ Voice cloning:       https://elevenlabs.io/docs/api-reference/voice-lab/add-voic
 
 from __future__ import annotations
 
+import base64
 import re
 import uuid
 from pathlib import Path
@@ -31,73 +32,131 @@ _audio_dir.mkdir(parents=True, exist_ok=True)
 
 _HEADERS = {"xi-api-key": settings.elevenlabs_api_key}
 
-# ElevenLabs TTS model – flash is lower-latency, multilingual supports many languages
-_TTS_MODEL = "eleven_flash_v2_5"
+# ElevenLabs TTS model – use the calmer multilingual model by default for bedtime narration
+_TTS_MODEL = settings.elevenlabs_tts_model
+
+
+_WORD_PATTERN = re.compile(r"\b[\w]+(?:['-][\w]+)*\b")
 
 
 # ── Word Timestamp Extraction ──────────────────────────────────────
 
 def _extract_words(text: str) -> list[str]:
-    """
-    Extract individual words from text, filtering out punctuation-only tokens.
-    Preserves contractions and handles common punctuation.
-    """
-    # Split on whitespace and common word boundaries
-    words = re.findall(r"\b[\w'-]+\b", text.lower())
-    return [w for w in words if w and w.isalpha() or "'" in w]
+    """Extract individual words from text while preserving original casing."""
+    return [match.group(0) for match in _WORD_PATTERN.finditer(text)]
+
+
+def _extract_word_spans(text: str) -> list[tuple[str, int, int]]:
+    """Return word tokens together with their character spans in the source text."""
+    return [(match.group(0), match.start(), match.end()) for match in _WORD_PATTERN.finditer(text)]
+
+
+def _alignment_to_word_timestamps(
+    text: str,
+    characters: list[str],
+    character_start_times_seconds: list[float],
+    character_end_times_seconds: list[float],
+) -> list[dict]:
+    """Convert character-level alignment data into word-level timestamps."""
+    if not characters or not character_start_times_seconds or not character_end_times_seconds:
+        return []
+    if len(characters) != len(character_start_times_seconds) or len(characters) != len(character_end_times_seconds):
+        return []
+
+    word_timestamps: list[dict] = []
+
+    for word, start_index, end_index in _extract_word_spans(text):
+        start_time = None
+        end_time = None
+
+        for char_index in range(start_index, min(end_index, len(characters))):
+            if characters[char_index].strip():
+                if start_time is None:
+                    start_time = character_start_times_seconds[char_index]
+                end_time = character_end_times_seconds[char_index]
+
+        if start_time is None or end_time is None:
+            continue
+
+        start_time = float(start_time)
+        end_time = float(end_time)
+        if end_time < start_time:
+            end_time = start_time
+
+        word_timestamps.append(
+            {
+                "word": word,
+                "start": round(start_time, 2),
+                "end": round(end_time, 2),
+            }
+        )
+
+    return word_timestamps
 
 
 def _calculate_word_timestamps(
     text: str,
     audio_duration_seconds: float,
 ) -> list[dict]:
-    """
-    Calculate word-level timestamps by distributing words across audio duration.
-    
-    Strategy:
-    - Extract words from text
-    - Consider punctuation for natural pause distribution
-    - Apply speech rate heuristics (average 150 words per minute)
-    - Handle silence at sentence boundaries
-    
-    Returns list of {"word": str, "start": float, "end": float} dicts
-    """
+    """Fallback timestamp generator that distributes time monotonically across words."""
     words = _extract_words(text)
-    
     if not words or audio_duration_seconds <= 0:
         return []
-    
-    # Calculate average time per word
-    avg_time_per_word = audio_duration_seconds / len(words) if words else 0
-    
-    timestamps = []
+
+    word_spans = _extract_word_spans(text)
+    word_weights: list[float] = []
+
+    for word, start_index, end_index in word_spans:
+        length_weight = max(1.0, min(2.5, 0.75 + len(word) * 0.12))
+        punctuation_weight = 1.0
+        trailing_text = text[end_index : min(len(text), end_index + 2)]
+        if trailing_text.startswith((".", "!", "?")):
+            punctuation_weight = 1.35
+        elif trailing_text.startswith((",", ";", ":")):
+            punctuation_weight = 1.15
+        word_weights.append(length_weight * punctuation_weight)
+
+    total_weight = sum(word_weights)
+    if total_weight <= 0:
+        return []
+
+    timestamps: list[dict] = []
     current_time = 0.0
-    
-    for i, word in enumerate(words):
-        # Add small variation for word duration (some words take longer)
-        # Estimate: longer words take ~15% more time
-        word_length_factor = min(1.3, 1.0 + (len(word) - 3) * 0.05)
-        word_duration = avg_time_per_word * word_length_factor
-        
-        # Ensure we don't exceed total audio duration
-        end_time = min(current_time + word_duration, audio_duration_seconds)
-        
-        timestamps.append({
-            "word": word,
-            "start": round(current_time, 2),
-            "end": round(end_time, 2),
-        })
-        
+
+    for index, (word, _, _) in enumerate(word_spans):
+        remaining_words = len(word_spans) - index
+        remaining_time = max(0.0, audio_duration_seconds - current_time)
+
+        if remaining_words == 1:
+            word_duration = remaining_time
+        else:
+            proportional_duration = audio_duration_seconds * (word_weights[index] / total_weight)
+            max_allowed = remaining_time - 0.01 * (remaining_words - 1)
+            word_duration = max(0.03, min(proportional_duration, max_allowed))
+
+        start_time = current_time
+        end_time = min(audio_duration_seconds, start_time + word_duration)
+
+        if end_time < start_time:
+            end_time = start_time
+
+        timestamps.append(
+            {
+                "word": word,
+                "start": round(start_time, 2),
+                "end": round(end_time, 2),
+            }
+        )
+
         current_time = end_time
-        
-        # Add small pause between words (realism)
-        pause = avg_time_per_word * 0.1  # 10% of word duration as pause
-        current_time += pause
-        
-        # Ensure we don't exceed total duration
-        if current_time >= audio_duration_seconds:
-            current_time = audio_duration_seconds
-    
+
+        if index < len(word_spans) - 1:
+            gap = min(0.05, max(0.0, audio_duration_seconds - current_time) / (remaining_words * 4))
+            current_time = min(audio_duration_seconds, current_time + gap)
+
+    if timestamps:
+        timestamps[-1]["end"] = round(audio_duration_seconds, 2)
+
     return timestamps
 
 
@@ -193,7 +252,9 @@ async def text_to_speech(
     cloned_voice_id    : ElevenLabs voice ID from a prior clone_voice() call.
     """
     voice_id = _resolve_voice_id(preset_voice_slug, cloned_voice_id)
-    url = f"{settings.elevenlabs_base_url}/text-to-speech/{voice_id}"
+    base_url = settings.elevenlabs_base_url.rstrip("/")
+    url = f"{base_url}/text-to-speech/{voice_id}/with-timestamps"
+    fallback_url = f"{base_url}/text-to-speech/{voice_id}"
 
     payload = {
         "text": text,
@@ -209,28 +270,73 @@ async def text_to_speech(
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(url, json=payload, headers=_HEADERS)
+
+            if resp.status_code == 404:
+                resp = await client.post(fallback_url, json=payload, headers=_HEADERS)
+                resp.raise_for_status()
+
+                filename = f"{uuid.uuid4().hex}.mp3"
+                file_path = _audio_path(filename)
+                file_path.write_bytes(resp.content)
+
+                logger.info("tts.ok", voice_id=voice_id, file=filename, bytes=len(resp.content))
+
+                word_timestamps = None
+                audio_duration = _get_audio_duration(file_path)
+                if audio_duration is not None:
+                    word_timestamps = _calculate_word_timestamps(text, audio_duration)
+                    logger.info(
+                        "word_timestamps.extracted_fallback",
+                        file=filename,
+                        word_count=len(word_timestamps),
+                        duration=audio_duration,
+                    )
+                else:
+                    logger.warning("word_timestamps.extraction_skipped", file=filename)
+
+                return f"/audio/{filename}", word_timestamps
+
             resp.raise_for_status()
+
+        response_data = resp.json()
+        audio_base64 = response_data.get("audio_base64")
+        alignment = response_data.get("alignment") or response_data.get("normalized_alignment")
+
+        if not audio_base64:
+            raise NarrationError("ElevenLabs timing response did not include audio_base64.")
 
         filename = f"{uuid.uuid4().hex}.mp3"
         file_path = _audio_path(filename)
-        file_path.write_bytes(resp.content)
+        file_path.write_bytes(base64.b64decode(audio_base64))
 
-        logger.info("tts.ok", voice_id=voice_id, file=filename, bytes=len(resp.content))
-        
-        # Extract word timestamps
+        logger.info("tts.ok", voice_id=voice_id, file=filename, bytes=file_path.stat().st_size)
+
         word_timestamps = None
-        audio_duration = _get_audio_duration(file_path)
-        if audio_duration is not None:
-            word_timestamps = _calculate_word_timestamps(text, audio_duration)
+        if alignment:
+            word_timestamps = _alignment_to_word_timestamps(
+                text=text,
+                characters=alignment.get("characters", []),
+                character_start_times_seconds=alignment.get("character_start_times_seconds", []),
+                character_end_times_seconds=alignment.get("character_end_times_seconds", []),
+            )
             logger.info(
                 "word_timestamps.extracted",
                 file=filename,
                 word_count=len(word_timestamps),
-                duration=audio_duration,
+                duration=word_timestamps[-1]["end"] if word_timestamps else None,
             )
-        else:
-            logger.warning("word_timestamps.extraction_skipped", file=filename)
-        
+
+        if not word_timestamps:
+            audio_duration = _get_audio_duration(file_path)
+            if audio_duration is not None:
+                word_timestamps = _calculate_word_timestamps(text, audio_duration)
+                logger.warning(
+                    "word_timestamps.fallback_estimation_used",
+                    file=filename,
+                    word_count=len(word_timestamps),
+                    duration=audio_duration,
+                )
+
         return f"/audio/{filename}", word_timestamps
 
     except httpx.HTTPStatusError as exc:
