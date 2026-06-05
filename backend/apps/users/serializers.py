@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import CustomUserModel, ChildrenProfileModel
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from dj_rest_auth.serializers import JWTSerializer
+from apps.admins.models import PricingPlanModel
 
 # Create your serializers here.
 class ChildrenProfileSerializer(serializers.ModelSerializer):
@@ -13,15 +14,21 @@ class ChildrenProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
+class PricingPlanBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PricingPlanModel
+        fields = ['id', 'name', 'price_per_month', 'points_included']
+
 class CustomUserModelSerializer(serializers.ModelSerializer):
     children_profiles = ChildrenProfileSerializer(many=True, read_only=True)
+    pricing_plan = PricingPlanBriefSerializer(read_only=True)
 
     class Meta:
         model = CustomUserModel
         fields = [
             'id', 'email', 'username',
             'date_of_birth', 'user_image', 'is_email_verified', 'is_active',
-            'children_profiles'
+            'pricing_plan', 'children_profiles'
         ]
         read_only_fields = ['id', 'email', 'is_staff', 'is_superuser', 'is_active', 'is_email_verified']
 
@@ -63,6 +70,14 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Add custom fields to the response for Flutter
         data['username'] = self.user.username
         data['is_active'] = self.user.is_active
+        data['pricing_plan'] = None
+        if self.user.pricing_plan:
+            data['pricing_plan'] = {
+                'id': self.user.pricing_plan.id,
+                'name': self.user.pricing_plan.name,
+                'price_per_month': str(self.user.pricing_plan.price_per_month),
+                'points_included': self.user.pricing_plan.points_included,
+            }
         
         return data
 

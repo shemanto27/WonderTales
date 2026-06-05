@@ -118,7 +118,13 @@ class FlutterGoogleLoginView(APIView):
             "id": user.id,
             "email": user.email,
             "full_name": user.username or email.split('@')[0],
-            "profile_image": request.build_absolute_uri(user.user_image.url) if user.user_image else "https://prommt.cc/profile_images/default_avatar.png"
+            "profile_image": request.build_absolute_uri(user.user_image.url) if user.user_image else "https://prommt.cc/profile_images/default_avatar.png",
+            "pricing_plan": {
+                "id": user.pricing_plan.id,
+                "name": user.pricing_plan.name,
+                "price_per_month": str(user.pricing_plan.price_per_month),
+                "points_included": user.pricing_plan.points_included,
+            } if user.pricing_plan else None
         }
         
         return Response({
@@ -180,7 +186,13 @@ class FlutterAppleLoginView(APIView):
             "id": user.id,
             "email": user.email,
             "full_name": user.username or email.split('@')[0],
-            "profile_image": request.build_absolute_uri(user.user_image.url) if user.user_image else "https://prommt.cc/profile_images/default_avatar.png"
+            "profile_image": request.build_absolute_uri(user.user_image.url) if user.user_image else "https://prommt.cc/profile_images/default_avatar.png",
+            "pricing_plan": {
+                "id": user.pricing_plan.id,
+                "name": user.pricing_plan.name,
+                "price_per_month": str(user.pricing_plan.price_per_month),
+                "points_included": user.pricing_plan.points_included,
+            } if user.pricing_plan else None
         }
         
         return Response({
