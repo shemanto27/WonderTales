@@ -107,7 +107,7 @@ def _new_story_prompt(
     interests = ", ".join(child.interests) if child.interests else "general adventures"
 
     return (
-        f"Write a bedtime story for {child.name}, who is {child.age} years old "
+        f"Write Chapter 1 of a bedtime story for {child.name}, who is {child.age} years old "
         f"and loves {interests}. "
         f"Theme: {theme_label}. "
         f"Language: {language.value}. "
@@ -117,7 +117,7 @@ def _new_story_prompt(
         f"Theme guidance: {_theme_story_direction(theme, custom_theme)} "
         f"Make this story feel distinct from other stories: use a different opening, a unique small adventure, and varied pacing. "
         f"Do not reuse familiar phrases or repeated sentence patterns unless they clearly fit the scene. "
-        f"End the story so the child feels sleepy and content."
+        f"End this chapter with a soft pause or gentle cliffhanger that leaves room for the story to continue."
     )
 
 
@@ -127,15 +127,15 @@ def _continuation_prompt(
     language: Language,
 ) -> str:
     return (
-        f"Continue the following story for {child.name} (age {child.age}). "
-        f"Seamlessly pick up where it left off. "
+        f"Write the NEXT chapter of the following story for {child.name} (age {child.age}). "
+        f"Seamlessly pick up where the previous chapters left off. "
         f"Language: {language.value}. "
         f"Length: approximately 250–350 words. "
         f"Maintain the same tone and characters. "
         f"Age guidance: {_age_story_direction(child.age)} "
         f"Theme guidance: preserve the established theme, mood, and pacing of the existing story. "
-        f"End with a satisfying, sleepy conclusion.\n\n"
-        f"PREVIOUS STORY:\n{previous_text}"
+        f"End with a satisfying, sleepy conclusion or another gentle pause.\n\n"
+        f"PREVIOUS CHAPTERS:\n{previous_text}"
     )
 
 

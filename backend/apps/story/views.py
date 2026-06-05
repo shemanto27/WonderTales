@@ -113,6 +113,22 @@ class StoryModelViewSet(ModelViewSet):
                 story.audio_file.save(f"story_{story.story_id_ai}.mp3", audio_content, save=False)
                 
             story.save()
+
+            # Create Chapter 1
+            from apps.story.models import StoryChapterModel
+            chapter = StoryChapterModel(
+                story=story,
+                chapter_number=1,
+                text=ai_data.get('story_text'),
+                word_timestamps=ai_data.get('word_timestamps')
+            )
+            if audio_url:
+                chapter.audio_file.save(f"story_{story.story_id_ai}_chapter_1.mp3", audio_content, save=False)
+            chapter.save()
+            
+            # Also populate full_story for backward compatibility
+            story.full_story = chapter.text
+            story.save()
             
             serializer = self.get_serializer(story)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -131,6 +147,15 @@ class StoryModelViewSet(ModelViewSet):
         interests = [i.strip() for i in child_profile.favourite_themes.split(',')] if child_profile.favourite_themes else []
 
         try:
+            # First, fetch all chapters text to send to AI
+            chapters = list(story.chapters.all().order_by('chapter_number'))
+            if chapters:
+                chapters_text = "\n\n".join([f"Chapter {c.chapter_number}:\n{c.text}" for c in chapters])
+                next_chapter_num = chapters[-1].chapter_number + 1
+            else:
+                chapters_text = story.full_story or ""
+                next_chapter_num = 2
+
             ai_data = continue_story_from_ai(
                 child_name=child_profile.child_name,
                 child_age=child_profile.child_age,
@@ -138,21 +163,35 @@ class StoryModelViewSet(ModelViewSet):
                 language=story.language,
                 narrator_voice=narrator_voice,
                 story_id=story.story_id_ai,
-                cloned_voice_id=cloned_voice_id
+                cloned_voice_id=cloned_voice_id,
+                previous_text=chapters_text
             )
             
-            # Update story text and timestamps
-            story.full_story = ai_data.get('story_text')
-            story.word_timestamps = ai_data.get('word_timestamps')
-            story.selected_voices = narrator_voice
-            story.cloned_voice_id = cloned_voice_id
+            # Create next chapter
+            from apps.story.models import StoryChapterModel
+            chapter = StoryChapterModel(
+                story=story,
+                chapter_number=next_chapter_num,
+                text=ai_data.get('story_text'),
+                word_timestamps=ai_data.get('word_timestamps')
+            )
             
             # Update audio
             audio_url = ai_data.get('audio_url')
             if audio_url:
                 audio_content = download_audio(audio_url)
-                story.audio_file.save(f"story_continued_{story.story_id_ai}.mp3", audio_content, save=False)
+                chapter.audio_file.save(f"story_{story.story_id_ai}_chapter_{next_chapter_num}.mp3", audio_content, save=False)
                 
+            chapter.save()
+            
+            # Update story's fallback fields
+            if story.full_story:
+                story.full_story += f"\n\n{chapter.text}"
+            else:
+                story.full_story = chapter.text
+            story.word_timestamps = chapter.word_timestamps
+            story.selected_voices = narrator_voice
+            story.cloned_voice_id = cloned_voice_id
             story.save()
             
             serializer = self.get_serializer(story)

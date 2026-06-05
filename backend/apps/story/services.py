@@ -48,7 +48,7 @@ def generate_story_from_ai(child_name, child_age, interests, language, narrator_
     response.raise_for_status()
     return response.json()
 
-def continue_story_from_ai(child_name, child_age, interests, language, narrator_voice, story_id, cloned_voice_id=None):
+def continue_story_from_ai(child_name, child_age, interests, language, narrator_voice, story_id, cloned_voice_id=None, previous_text=None):
     # Normalize language
     language_map = {
         "english": "en", "french": "fr", "spanish": "es", "arabic": "ar",
@@ -66,6 +66,8 @@ def continue_story_from_ai(child_name, child_age, interests, language, narrator_
         "narrator_voice": narrator_voice,
         "story_id": story_id
     }
+    if previous_text:
+        payload["previous_story_text"] = previous_text
     if cloned_voice_id:
         payload["cloned_voice_id"] = cloned_voice_id
 

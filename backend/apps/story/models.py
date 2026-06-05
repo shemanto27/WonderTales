@@ -65,3 +65,20 @@ class StoryModel(models.Model):
 
     def __str__(self):
         return self.title or f"Story for {self.children_profile}"
+
+class StoryChapterModel(models.Model):
+    """
+    Stores individual chapters for a story.
+    """
+    story = models.ForeignKey(StoryModel, on_delete=models.CASCADE, related_name='chapters')
+    chapter_number = models.IntegerField(default=1)
+    text = models.TextField(blank=True, null=True)
+    audio_file = models.FileField(upload_to='stories/chapters/audio/', blank=True, null=True)
+    word_timestamps = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['chapter_number']
+
+    def __str__(self):
+        return f"{self.story} - Chapter {self.chapter_number}"

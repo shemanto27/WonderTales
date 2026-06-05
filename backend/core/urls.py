@@ -54,12 +54,18 @@ def redirect_admin_index(request):
 
 
 
+from apps.users.views.social_auth import FlutterGoogleLoginView, FlutterAppleLoginView
+
 urlpatterns = [
     path('admin/', redirect_admin_index),
     path('admin/', admin.site.urls),
 
     # Sentry Error Trigger
     path('sentry-debug/', trigger_error),
+
+    # Flutter Custom Social Login Endpoints
+    path('api/user/google/id-token/', FlutterGoogleLoginView.as_view(), name='custom_google_login'),
+    path('api/dj-rest-auth/apple/', FlutterAppleLoginView.as_view(), name='custom_apple_login'),
 
     # Local app routes (v1 prefix)
     

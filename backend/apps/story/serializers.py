@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.story.models import StoryModel, VoiceCloneModel
+from apps.story.models import StoryModel, StoryChapterModel, VoiceCloneModel
 
 class VoiceCloneModelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,13 +7,21 @@ class VoiceCloneModelSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'voice_name', 'description', 'voice_id_ai', 'created_at']
         read_only_fields = ['id', 'user', 'voice_id_ai', 'created_at']
 
+class StoryChapterModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryChapterModel
+        fields = ['id', 'chapter_number', 'text', 'audio_file', 'word_timestamps', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
 class StoryModelSerializer(serializers.ModelSerializer):
+    chapters = StoryChapterModelSerializer(many=True, read_only=True)
+
     class Meta:
         model = StoryModel
         fields = [
             'id', 'children_profile', 'title', 'length', 'theme', 'custom_theme',
             'full_story', 'language', 'selected_voices', 'cloned_voice_id',
-            'story_id_ai', 'audio_file', 'word_timestamps', 'created_at', 'updated_at'
+            'story_id_ai', 'audio_file', 'word_timestamps', 'created_at', 'updated_at', 'chapters'
         ]
         read_only_fields = ['id', 'story_id_ai', 'audio_file', 'word_timestamps', 'created_at', 'updated_at']
 
