@@ -16,7 +16,7 @@ from .models import PricingPlanModel
 
 @admin.register(PricingPlanModel)
 class PricingPlanAdmin(ModelAdmin):
-    list_display = ["name", "price_per_month", "points_included"]
+    list_display = ["name", "price_per_month", "benefits"]
     
     def has_add_permission(self, request):
         # Admin cannot add new plans, only edit existing ones

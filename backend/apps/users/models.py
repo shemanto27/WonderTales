@@ -1,5 +1,6 @@
 from django.db import models
-from  django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from apps.admins.models import PricingPlanModel
 
 # Create your models here.
 
@@ -9,6 +10,13 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
+        # Assign Free plan if not provided
+        if not user.pricing_plan_id:
+            try:
+                free_plan = PricingPlanModel.objects.get(name='Free')
+                user.pricing_plan = free_plan
+            except PricingPlanModel.DoesNotExist:
+                pass
         user.set_password(password)
         user.save(using=self._db)
         return user

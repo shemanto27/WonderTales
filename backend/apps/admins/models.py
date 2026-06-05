@@ -48,7 +48,9 @@ class PricingPlanModel(models.Model):
     name = models.CharField(max_length=100)
     price_per_month = models.DecimalField(max_digits=10, decimal_places=2)
     details = models.TextField()
-    points_included = models.IntegerField(default=0)
+    benefits = models.TextField(help_text="Bullet‑point description of what the plan includes, e.g. '3 AI stories, Save & replay...'")
+    # Legacy field kept for backward compatibility (will not be exposed)
+    points_included = models.IntegerField(default=0, editable=False)
 
     def __str__(self):
         return f"{self.name} - ${self.price_per_month}/mo"

@@ -14,6 +14,7 @@ class ReportSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 class PricingPlanSerializer(serializers.ModelSerializer):
+    description = serializers.CharField(source='details')
     class Meta:
         model = PricingPlanModel
-        fields = ['id', 'name', 'price_per_month', 'details', 'points_included']
+        fields = ['id', 'name', 'price_per_month', 'description', 'benefits']

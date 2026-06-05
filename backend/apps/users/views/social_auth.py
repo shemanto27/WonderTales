@@ -123,7 +123,7 @@ class FlutterGoogleLoginView(APIView):
                 "id": user.pricing_plan.id,
                 "name": user.pricing_plan.name,
                 "price_per_month": str(user.pricing_plan.price_per_month),
-                "points_included": user.pricing_plan.points_included,
+                "benefits": user.pricing_plan.benefits,
             } if user.pricing_plan else None
         }
         
@@ -191,7 +191,7 @@ class FlutterAppleLoginView(APIView):
                 "id": user.pricing_plan.id,
                 "name": user.pricing_plan.name,
                 "price_per_month": str(user.pricing_plan.price_per_month),
-                "points_included": user.pricing_plan.points_included,
+                "benefits": user.pricing_plan.benefits,
             } if user.pricing_plan else None
         }
         
