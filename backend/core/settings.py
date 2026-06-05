@@ -419,6 +419,11 @@ UNFOLD = {
                         "icon": "report",
                         "link": "/admin/admins/reportmodel/", 
                     },
+                    {
+                        "title": "Pricing Plans",
+                        "icon": "payments",
+                        "link": "/admin/admins/pricingplanmodel/", 
+                    },
                 ],
             },
             {

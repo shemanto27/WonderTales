@@ -38,3 +38,11 @@ class ReportCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(reporter=self.request.user)
+
+class PricingPlanListView(generics.ListAPIView):
+    """Returns all 3 pricing plans. Public endpoint — no auth required."""
+    from .models import PricingPlanModel
+    from .serializers import PricingPlanSerializer
+    queryset = PricingPlanModel.objects.all()
+    serializer_class = PricingPlanSerializer
+    permission_classes = [permissions.AllowAny]

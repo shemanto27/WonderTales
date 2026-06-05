@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import AppDetailsModel, ReportModel
+from .models import AppDetailsModel, ReportModel, PricingPlanModel
 
 # Create your serializers here. 
 class AppDetailsSerializer(serializers.ModelSerializer):
@@ -12,3 +12,8 @@ class ReportSerializer(serializers.ModelSerializer):
         model = ReportModel
         fields = ['id', 'target_id', 'target_type', 'reason', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+class PricingPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PricingPlanModel
+        fields = ['id', 'name', 'price_per_month', 'details', 'points_included']
