@@ -17,7 +17,7 @@ class ChildrenProfileSerializer(serializers.ModelSerializer):
 class PricingPlanBriefSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingPlanModel
-        fields = ['id', 'name', 'price_per_month', 'description', 'benefits']
+        fields = ['id', 'name', 'price_per_month', 'details', 'benefits']
 
 class CustomUserModelSerializer(serializers.ModelSerializer):
     children_profiles = ChildrenProfileSerializer(many=True, read_only=True)
@@ -76,6 +76,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'id': self.user.pricing_plan.id,
                 'name': self.user.pricing_plan.name,
                 'price_per_month': str(self.user.pricing_plan.price_per_month),
+                'details': self.user.pricing_plan.details,
                 'benefits': self.user.pricing_plan.benefits,
             }
         
