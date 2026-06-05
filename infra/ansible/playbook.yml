@@ -22,6 +22,34 @@
         update_cache: yes
         upgrade: dist
 
+    - name: Create swap file if not exists
+      command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+
+    - name: Set swap file permissions
+      file:
+        path: /swapfile
+        mode: "0600"
+
+    - name: Format swap file
+      command: mkswap /swapfile
+      ignore_errors: yes
+
+    - name: Enable swap file
+      command: swapon /swapfile
+      ignore_errors: yes
+
+    - name: Add swap to fstab
+      mount:
+        name: none
+        src: /swapfile
+        fstype: swap
+        opts: sw
+        passno: '0'
+        dump: '0'
+        state: present
+
     - name: Install prerequisites for Docker
       apt:
         name:
