@@ -64,8 +64,8 @@ urlpatterns = [
     path('sentry-debug/', trigger_error),
 
     # Flutter Custom Social Login Endpoints
-    path('api/user/google/id-token/', FlutterGoogleLoginView.as_view(), name='custom_google_login'),
-    path('api/dj-rest-auth/apple/', FlutterAppleLoginView.as_view(), name='custom_apple_login'),
+    path('v1/user/google/id-token/', FlutterGoogleLoginView.as_view(), name='custom_google_login'),
+    path('v1/dj-rest-auth/apple/', FlutterAppleLoginView.as_view(), name='custom_apple_login'),
 
     # Local app routes (v1 prefix)
     

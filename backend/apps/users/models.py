@@ -58,6 +58,7 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
 
     
     is_active = models.BooleanField(default=True)
+    pricing_plan = models.ForeignKey('admins.PricingPlanModel', on_delete=models.SET_NULL, null=True, blank=True, related_name='subscribers')
 
     objects = CustomUserManager()
 

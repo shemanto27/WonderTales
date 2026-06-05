@@ -23,9 +23,11 @@ class AppleLogin(SocialLoginView):
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 CustomUserModel = get_user_model()
 
@@ -36,14 +38,68 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
+
+# ── Request Serializers for Swagger ──────────────────────────────────────────
+
+class FlutterGoogleLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(help_text="Google account email address")
+
+class FlutterAppleLoginSerializer(serializers.Serializer):
+    id_token = serializers.CharField(help_text="Apple identity token from Flutter SDK (credential.identityToken)")
+    email = serializers.EmailField(required=False, help_text="User email. Required on first login. Must be persisted by Flutter and re-sent on subsequent logins.")
+
+
+# ── Shared response schema ────────────────────────────────────────────────────
+
+_user_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'id':            openapi.Schema(type=openapi.TYPE_INTEGER,  description="User database ID"),
+        'email':         openapi.Schema(type=openapi.TYPE_STRING,   description="User email"),
+        'full_name':     openapi.Schema(type=openapi.TYPE_STRING,   description="Display name"),
+        'profile_image': openapi.Schema(type=openapi.TYPE_STRING,   description="Profile image URL"),
+    }
+)
+
+_social_login_response = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="Always true on success"),
+        'created': openapi.Schema(type=openapi.TYPE_BOOLEAN, description="True if a new account was just created"),
+        'refresh': openapi.Schema(type=openapi.TYPE_STRING,  description="Long-lived JWT refresh token"),
+        'access':  openapi.Schema(type=openapi.TYPE_STRING,  description="Short-lived JWT access token"),
+        'user':    _user_schema,
+    }
+)
+
+
+# ── Views ─────────────────────────────────────────────────────────────────────
+
 class FlutterGoogleLoginView(APIView):
     """
-    Custom Google login that only takes email to match the flutter dev's requirements.
-    WARNING: Accepting only an email without an id_token is insecure and can allow 
-    impersonation. Use with caution.
+    Custom Google login — accepts the verified email from the Flutter Google Sign-In SDK.
+    Returns JWT access + refresh tokens and basic user info.
     """
     permission_classes = []
 
+    @swagger_auto_schema(
+        operation_summary="Google Login (Flutter)",
+        operation_description=(
+            "Send the email obtained from Google Sign-In on Flutter. "
+            "If no account exists for that email a new one is created automatically.\n\n"
+            "**Flutter snippet:**\n"
+            "```dart\n"
+            "final googleAuth = await googleUser.authentication;\n"
+            "// Send the user's email — NOT the id_token for this endpoint\n"
+            "```"
+        ),
+        request_body=FlutterGoogleLoginSerializer,
+        responses={
+            200: openapi.Response("Login successful", _social_login_response),
+            400: openapi.Response("Missing email"),
+        },
+        tags=["Social Auth"],
+    )
     def post(self, request):
         email = request.data.get('email')
         if not email:
@@ -73,12 +129,34 @@ class FlutterGoogleLoginView(APIView):
             "user": user_data
         })
 
+
 class FlutterAppleLoginView(APIView):
     """
-    Custom Apple login that takes id_token and email.
+    Custom Apple login — accepts the identity token and email from the Flutter Sign in with Apple SDK.
+    Returns JWT access + refresh tokens and basic user info.
     """
     permission_classes = []
 
+    @swagger_auto_schema(
+        operation_summary="Apple Login (Flutter)",
+        operation_description=(
+            "Send the `identityToken` from Apple and the user's email.\n\n"
+            "⚠️ **Apple Email Behaviour:** Apple only provides the email on the very first login. "
+            "Your Flutter app must save it to SecureStorage and re-send it on every subsequent login.\n\n"
+            "**Flutter snippet:**\n"
+            "```dart\n"
+            "final credential = await SignInWithApple.getAppleIDCredential(...);\n"
+            "final idToken = credential.identityToken; // ← always present\n"
+            "final email  = credential.email;          // ← null after first login, read from storage\n"
+            "```"
+        ),
+        request_body=FlutterAppleLoginSerializer,
+        responses={
+            200: openapi.Response("Login successful", _social_login_response),
+            400: openapi.Response("Missing id_token or email"),
+        },
+        tags=["Social Auth"],
+    )
     def post(self, request):
         id_token = request.data.get('id_token')
         email = request.data.get('email')

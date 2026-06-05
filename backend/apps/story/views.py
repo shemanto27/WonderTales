@@ -2,9 +2,9 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status, parsers
-from apps.story.models import StoryModel, VoiceCloneModel
+from apps.story.models import StoryModel, VoiceCloneModel, StoryChapterModel
 from apps.story.serializers import (
-    StoryModelSerializer, VoiceCloneModelSerializer,
+    StoryModelSerializer, VoiceCloneModelSerializer, StoryChapterModelSerializer,
     StoryGenerateRequestSerializer, StoryContinueRequestSerializer, VoiceCloneRequestSerializer
 )
 from rest_framework.permissions import IsAuthenticated
@@ -115,7 +115,6 @@ class StoryModelViewSet(ModelViewSet):
             story.save()
 
             # Create Chapter 1
-            from apps.story.models import StoryChapterModel
             chapter = StoryChapterModel(
                 story=story,
                 chapter_number=1,
@@ -125,13 +124,21 @@ class StoryModelViewSet(ModelViewSet):
             if audio_url:
                 chapter.audio_file.save(f"story_{story.story_id_ai}_chapter_1.mp3", audio_content, save=False)
             chapter.save()
-            
+
             # Also populate full_story for backward compatibility
             story.full_story = chapter.text
             story.save()
-            
-            serializer = self.get_serializer(story)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            # Return the story envelope + the newly created chapter
+            chapter_serializer = StoryChapterModelSerializer(chapter)
+            return Response({
+                "story_id": story.id,
+                "story_id_ai": story.story_id_ai,
+                "title": story.title,
+                "theme": story.theme,
+                "language": story.language,
+                "current_chapter": chapter_serializer.data,
+            }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -183,7 +190,7 @@ class StoryModelViewSet(ModelViewSet):
                 chapter.audio_file.save(f"story_{story.story_id_ai}_chapter_{next_chapter_num}.mp3", audio_content, save=False)
                 
             chapter.save()
-            
+
             # Update story's fallback fields
             if story.full_story:
                 story.full_story += f"\n\n{chapter.text}"
@@ -193,9 +200,17 @@ class StoryModelViewSet(ModelViewSet):
             story.selected_voices = narrator_voice
             story.cloned_voice_id = cloned_voice_id
             story.save()
-            
-            serializer = self.get_serializer(story)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # Return the story envelope + the newly created chapter
+            chapter_serializer = StoryChapterModelSerializer(chapter)
+            return Response({
+                "story_id": story.id,
+                "story_id_ai": story.story_id_ai,
+                "title": story.title,
+                "theme": story.theme,
+                "language": story.language,
+                "current_chapter": chapter_serializer.data,
+            }, status=status.HTTP_200_OK)
             
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

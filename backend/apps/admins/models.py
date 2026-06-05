@@ -36,4 +36,19 @@ class ReportModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Report by {self.reporter} on {self.target_type} {self.target_id}"
+        return f"Report by {self.reporter} on {self.target_type} {self.target_id} "
+
+class PricingPlanModel(models.Model):
+    class Meta:
+        verbose_name = "Pricing Plan"
+        verbose_name_plural = "Pricing Plans"
+        app_label = 'admins'
+        db_table = 'Pricing Plans Table'
+
+    name = models.CharField(max_length=100)
+    price_per_month = models.DecimalField(max_digits=10, decimal_places=2)
+    details = models.TextField()
+    points_included = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.name} - ${self.price_per_month}/mo"
